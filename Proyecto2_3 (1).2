@@ -1,0 +1,78 @@
+test_Q:		 load ACC, CTE       # Carga el valor del CTE en el ACC
+             Q1                  # Dirección de memoria donde se almacena ACC
+             MOV A, ACC         # Intercambia las partes del ACC y almacena el resultado en A
+             load ACC, CTE       # Carga nuevamente el valor del CTE en ACC
+             Q                   # Dirección de memoria donde se almacena ACC
+             AND ACC, CTE        # Realiza una operación AND entre ACC y la constante CTE
+             0000 0001           # Realiza una operación AND con la constante 00000001 (bit más bajo)
+             XOR ACC, A          # Realiza una operación XOR entre ACC y A
+             JZ                  # Salta a la etiqueta Suma_M una  si el resultado es cero
+             shift_q1        # Salta a la etiqueta shift_q1 si el resultado de la operación anterior no es cero
+             MOV ACC, A         # Intercambia las partes  del ACC y almacena el resultado en A
+             MOV DPTR, CTE       # Mueve la dirección de memoria del CTE al DPTR
+             AUXA                # Dirección de memoria donde se almacena ACC
+             load ACC, CTE       # Carga el valor del CTE en ACC
+             M                   # Dirección de memoria donde se almacena ACC
+             SWAP ACC, A          # Copia el valor de ACC a A
+             load ACC, CTE       # Carga nuevamente el valor del CTE en ACC
+             AUXA                # Dirección de memoria donde se almacena ACC
+			 JZ               	 # Salta a una ubicación específica si la bandera de cero (Zero Flag) está establecida
+             Resta_M         # Salta incondicionalmente a la etiqueta Resta_M
+Suma_M:      ADD ACC, A          # Suma ACC y A y almacena el resultado en ACC
+             JMP 
+			 Suma_res        # Salta incondicionalmente a la etiqueta shift_q1
+Resta_M:	 SUB ACC, A          # Resta A de ACC y almacena el resultado en ACC
+Suma_res:    MOV [DPTR], ACC     # Almacena el valor de ACC en la dirección de memoria apuntada por DPTR
+shift_q1:	 load ACC, CTE       # Carga el valor del CTE en ACC
+             Q                   # Dirección de memoria donde se almacena ACC
+             AND ACC, CTE        # Realiza una operación AND entre ACC y CTE
+             0000 0001           # Realiza una operación AND con la constante 00000001 (bit más bajo)
+             MOV DPTR, CTE       # Mueve la dirección de memoria del CTE al registro DPTR
+             Q1                  # Dirección de memoria donde se almacena ACC
+             MOV [DPTR], ACC     # Almacena el valor de ACC en la dirección de memoria apuntada por DPTR
+shift_q: 	 load ACC, CTE       # Trae el valor de Q al ACC
+			 Q
+			 MOV A, ACC			 # Guarda el valor de Q en A	 	 
+			 load ACC, CTE		 # Guarda el valor de AUXA en ACC
+			 AUXA
+			 AND ACC, CTE		 # Realiza un AND entre AUXA y 0001 para obtener el LSB
+			 0000 0001
+			 SWAP ACC, A		 # Intercambia el valor de ACC y A, osea ACC=Q,A=LSB de AUXA
+			 Slr
+			 JZ					 # Si el LSB es 0 salta al apartado es_cero, si no, salta al de es_uno
+			 guardar
+es_uno:		 OR ACC, CTE		 # Le agrega un 1 al MSB del ACC, osea quedaria ACC= Q movido a la derecha con 1 en el MSB
+			 1000 0000
+guardar:	 MOV DPTR, CTE 		 # Trae la dirección de memoria de Q al DPTR
+			 Q
+			 MOV [DPTR], ACC	 # Guarda el valor del ACC en la direccion de memoria dada
+Shift_aux:   load ACC, CTE		 # Trae el valor de AUXA al ACC
+			 AUXA
+			 MOV A, ACC			 # El valor de A cambia al de ACC, osea A=AUXA
+			 AND ACC,CTE		 # Se realiza un AND entre AUXA y 1000 para obtener el MSB
+			 1000 0000
+			 SWAP A, ACC		 # Se intercambia el valor de A con el de ACC, osea ACC= AUXA y A= MSB de AUXA
+			 Slr				 # Se desplaza el valor de ACC a la derecha
+			 OR ACC, A			 # Se le agrega el valor del MSB a ACC, osea ACC= AUXA desplazado a la derecha con su MSB al principio
+			 MOV DPTR, CTE		 # Se trae la direccion de AUXA al DPTR
+			 AUXA
+			 MOV [DPTR], ACC	 # Se guarda en AUXA el valor de ACC
+loop: 		 load ACC, CTE		 # Se trae el valor de CANT
+			 CANT
+			 APLUS				 # Se le suma 1 al valor de ACC, osea ACC= cant+1
+			 MOV DPTR, CTE		 # Se trae la direccion de AUXA al DPTR
+			 CANT
+			 MOV [DPTR], ACC
+			 JN 				 # Si cant es igual a 0, termina el programa, si no, salta a test_Q
+			 test_Q
+END:    	 load ACC, CTE		 # Se trae el valor de AUXA
+			 AUXA
+			 MOV A, ACC
+			 load ACC, CTE		 # Se trae el valor de Q
+			 Q
+			 HALT		 
+AUXA 00000000
+Q1 00000000 
+CANT 11111000 
+Q: 0110 0000
+M: 0001 0000
